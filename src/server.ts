@@ -3,9 +3,11 @@ import http from "http";
 import mongoose from "mongoose";
 import { config } from "./config/config";
 import Logging from "./library/logging";
+import userRoutes from "./routes/userRoutes";
 
 const router = express();
 
+/** Mongo DB database connection setup */
 mongoose
   .connect(config.mongo.url, {
     retryWrites: true,
@@ -21,6 +23,7 @@ mongoose
   });
 
 const startServer = () => {
+  /** Request Logging */
   router.use((req, res, next) => {
     Logging.info(
       `Incoming -> Method: [${req.method}] - Url: [${req.url}] - IP: [${req.socket.remoteAddress}]`
@@ -36,7 +39,6 @@ const startServer = () => {
   router.use(express.json());
 
   /**  Api Rules */
-
   router.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header(
@@ -54,15 +56,21 @@ const startServer = () => {
     next();
   });
 
+  /** Routes */
+  router.use("/api/users", userRoutes);
+
+  /** API healthcheck */
   router.get("/ping", (_req, res) => res.status(200).json({ message: "live" }));
 
   router.use((req, res, next) => {
-    const error = new Error("Offline");
+    const endpoint = req.path;
+    const error = new Error(`Endpoint <${req.path}> not found!`);
     Logging.error(error);
 
     return res.status(404).json({ message: error.message });
   });
 
+  /** API server init */
   http
     .createServer(router)
     .listen(config.server.port, () =>
