@@ -1,9 +1,11 @@
-import { NextFunction, Request, Response } from "express";
-import User from "../models/user";
-import { pick } from "lodash";
-import { createUserValidation } from "../validation/userValidation";
 import bcrypt from "bcrypt";
-import { config } from "../config/config";
+import { NextFunction, Request, Response } from "express";
+import { pick } from "lodash";
+import User from "../models/user";
+import {
+  createUserValidation,
+  signinValidation,
+} from "../validation/userValidation";
 
 const createUser = async (
   request: Request,
@@ -118,4 +120,49 @@ const deleteUser = async (
   }
 };
 
-export default { createUser, getUser, getAllUsers, updateUser, deleteUser };
+const signin = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  const userInfo = pick(request.body, ["email", "password"]);
+  const { error } = signinValidation.validate(userInfo);
+
+  if (error) {
+    return response.status(400).json({ message: error.details[0].message });
+  }
+  try {
+    const user = await User.findOne({ email: userInfo.email });
+
+    if (!user) {
+      return response.status(404).json({ message: "user not found" });
+    }
+    const passwordMatch = await bcrypt.compare(
+      userInfo.password,
+      user.password
+    );
+    console.log(passwordMatch);
+
+    if (!passwordMatch) {
+      return response
+        .status(401)
+        .json({ message: "invalid email or password" });
+    }
+    const token = user.generateToken?.(user) || "";
+
+    return response
+      .header("x-auth-token", token)
+      .send(pick(user, ["_id", "name", "email"]));
+  } catch (error) {
+    response.status(500).json({ message: "Something went wrong!" });
+  }
+};
+
+export default {
+  createUser,
+  getUser,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+  signin,
+};

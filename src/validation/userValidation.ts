@@ -5,3 +5,8 @@ export const createUserValidation = Joi.object({
   email: Joi.string().min(3).max(255).email().required(),
   password: Joi.string().min(3).max(255).required(),
 });
+
+export const signinValidation = Joi.object({
+  email: Joi.string().min(3).required(),
+  password: Joi.string().min(3).required(),
+});
