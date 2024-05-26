@@ -1,14 +1,34 @@
 import { NextFunction, Request, Response } from "express";
 import User from "../models/user";
 import { pick } from "lodash";
+import { createUserValidation } from "../validation/userValidation";
+import bcrypt from "bcrypt";
+import { config } from "../config/config";
 
 const createUser = async (
   request: Request,
   response: Response,
   next: NextFunction
 ) => {
-  const newUser = pick(request.body, ["name", "email"]);
+  const newUser = pick(request.body, ["name", "email", "password"]);
+  const { error } = createUserValidation.validate(newUser);
+
+  if (error) {
+    return response.status(400).json({ error: error.details[0].message });
+  }
+
   try {
+    const userExists = await User.findOne({ email: newUser.email });
+
+    if (userExists) {
+      return response.status(400).json({ message: "Email already exists" });
+    }
+
+    /** Hashing password */
+    const salt = await bcrypt.genSalt(5);
+    const hashedPassword = await bcrypt.hash(newUser.password, salt);
+    newUser.password = hashedPassword;
+
     const user = await User.create(newUser);
     return response.status(201).json(pick(user, ["_id", "name", "email"]));
   } catch (error) {
