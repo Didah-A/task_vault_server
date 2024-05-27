@@ -33,7 +33,8 @@ const UserSchema: Schema = new Schema(
 UserSchema.methods.generateToken = function (user: IUserModel) {
   const token = jwt.sign(
     { _id: user.id, email: user.email, name: user.name },
-    config.auth.key || ""
+    config.auth.key || "",
+    { expiresIn: "12h" }
   );
   return token;
 };
