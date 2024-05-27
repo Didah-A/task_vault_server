@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import { pick } from "lodash";
 import Task from "../models/tasks";
 import { createTaskValidation } from "../validation/taskValidation";
+import getUser from "../utils/getUser";
 
 const createTask = async (request: Request, response: Response) => {
   const newTask = pick(request.body, ["title", "description"]);
   const { error } = createTaskValidation.validate(newTask);
-  const user = (request as any).user;
+  const user = getUser(request);
 
   if (error) {
     return response.status(400).json({ message: error.details[0].message });
@@ -24,7 +25,7 @@ const createTask = async (request: Request, response: Response) => {
 
 const getTask = async (request: Request, response: Response) => {
   const taskId = request.params.taskId;
-  const user = (request as any).user;
+  const user = getUser(request);
 
   try {
     const task = await Task.findOne({ _id: taskId, owner: user._id }).populate(
@@ -43,9 +44,10 @@ const getTask = async (request: Request, response: Response) => {
 };
 
 const getAllTasks = async (request: Request, response: Response) => {
+  const user = getUser(request);
   try {
     const tasks = await Task.find({
-      owner: (request as any).user._id,
+      owner: user._id,
     }).populate("owner", "_id name email");
     return response.status(200).json(tasks);
   } catch (error) {
@@ -58,7 +60,7 @@ const getAllTasks = async (request: Request, response: Response) => {
 const updateTask = async (request: Request, response: Response) => {
   const taskId = request.params.taskId;
   const taskBody = pick(request.body, ["title", "description"]);
-  const user = (request as any).user;
+  const user = getUser(request);
 
   const { error } = createTaskValidation.validate(taskBody);
 
@@ -90,7 +92,7 @@ const updateTask = async (request: Request, response: Response) => {
 
 const deleteTask = async (request: Request, response: Response) => {
   const taskId = request.params.taskId;
-  const user = (request as any).user;
+  const user = getUser(request);
 
   try {
     const task = await Task.findByIdAndDelete({ _id: taskId, owner: user._id });

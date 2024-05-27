@@ -1,13 +1,17 @@
 import express from "express";
 import userController from "../controllers/user";
+import authenticate from "../middleware/auth";
 
 const router = express.Router();
 
+/** Public routes */
 router.post("/create", userController.createUser);
-router.get("/:userId", userController.getUser);
-router.patch("/:userId", userController.updateUser);
-router.get("/", userController.getAllUsers);
-router.delete("/:userId", userController.deleteUser);
 router.post("/signin", userController.signin);
 
-export = router;
+/** Private routes */
+router.get("/:userId", authenticate, userController.getUser);
+router.patch("/:userId", authenticate, userController.updateUser);
+router.get("/", authenticate, userController.getAllUsers);
+router.delete("/:userId", authenticate, userController.deleteUser);
+
+export default router;

@@ -64,6 +64,7 @@ const startServer = () => {
   /** API healthcheck */
   router.get("/ping", (_req, res) => res.status(200).json({ message: "live" }));
 
+  /** Route error handling */
   router.use((req, res, next) => {
     const endpoint = req.path;
     const error = new Error(`Endpoint <${req.path}> not found!`);

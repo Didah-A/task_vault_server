@@ -6,12 +6,9 @@ import {
   createUserValidation,
   signinValidation,
 } from "../validation/userValidation";
+import getCurrentUser from "../utils/getUser";
 
-const createUser = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const createUser = async (request: Request, response: Response) => {
   const newUser = pick(request.body, ["name", "email", "password"]);
   const { error } = createUserValidation.validate(newUser);
 
@@ -40,12 +37,14 @@ const createUser = async (
   }
 };
 
-const getUser = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const getUser = async (request: Request, response: Response) => {
   const userId = request.params.userId;
+  const loggedInUser = getCurrentUser(request);
+
+  if (userId !== loggedInUser._id) {
+    return response.status(403).json({ message: "Forbidden" });
+  }
+
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -57,11 +56,7 @@ const getUser = async (
   }
 };
 
-const getAllUsers = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const getAllUsers = async (_request: Request, response: Response) => {
   try {
     const users = await User.find().select("_id name email");
     return response.status(200).json(users);
@@ -72,13 +67,15 @@ const getAllUsers = async (
   }
 };
 
-const updateUser = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const updateUser = async (request: Request, response: Response) => {
   const userId = request.params.userId;
   const userInfo = pick(request.body, ["name"]);
+  const loggedInUser = getCurrentUser(request);
+
+  if (userId !== loggedInUser._id) {
+    return response.status(403).json({ message: "Forbidden" });
+  }
+
   try {
     const updatedUser = await User.findByIdAndUpdate(
       { _id: userId },
@@ -109,6 +106,12 @@ const deleteUser = async (
   next: NextFunction
 ) => {
   const userId = request.params.userId;
+  const loggedInUser = getCurrentUser(request);
+
+  if (userId !== loggedInUser._id) {
+    return response.status(403).json({ message: "Forbidden" });
+  }
+
   try {
     await User.findByIdAndDelete(userId);
 
