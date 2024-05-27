@@ -1,12 +1,12 @@
 import bcrypt from "bcrypt";
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { pick } from "lodash";
 import User from "../models/user";
+import getCurrentUser from "../utils/getUser";
 import {
   createUserValidation,
   signinValidation,
 } from "../validation/userValidation";
-import getCurrentUser from "../utils/getUser";
 
 const createUser = async (request: Request, response: Response) => {
   const newUser = pick(request.body, ["name", "email", "password"]);
@@ -100,11 +100,7 @@ const updateUser = async (request: Request, response: Response) => {
   }
 };
 
-const deleteUser = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const deleteUser = async (request: Request, response: Response) => {
   const userId = request.params.userId;
   const loggedInUser = getCurrentUser(request);
 
@@ -123,11 +119,7 @@ const deleteUser = async (
   }
 };
 
-const signin = async (
-  request: Request,
-  response: Response,
-  next: NextFunction
-) => {
+const signin = async (request: Request, response: Response) => {
   const userInfo = pick(request.body, ["email", "password"]);
   const { error } = signinValidation.validate(userInfo);
 
