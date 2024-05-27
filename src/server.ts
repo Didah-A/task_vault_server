@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { config } from "./config/config";
 import Logging from "./library/logging";
 import userRoutes from "./routes/userRoutes";
+import TaskRoutes from "./routes/taskRoutes";
 
 const router = express();
 
@@ -58,6 +59,7 @@ const startServer = () => {
 
   /** Routes */
   router.use("/api/users", userRoutes);
+  router.use("/api/tasks", TaskRoutes);
 
   /** API healthcheck */
   router.get("/ping", (_req, res) => res.status(200).json({ message: "live" }));

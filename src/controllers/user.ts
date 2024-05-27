@@ -141,7 +141,6 @@ const signin = async (
       userInfo.password,
       user.password
     );
-    console.log(passwordMatch);
 
     if (!passwordMatch) {
       return response
